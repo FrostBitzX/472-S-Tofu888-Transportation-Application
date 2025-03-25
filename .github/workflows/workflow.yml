@@ -135,3 +135,4 @@ jobs:
           release_name: "Release $TAG"
           draft: false
           prerelease: false
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
