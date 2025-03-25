@@ -1,0 +1,51 @@
+name: transportation-app
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: my-mysql
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: transport_application
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # SQL initialization script
+
+  backend:
+    build:
+      context: ./backend # เปลี่ยนไปใช้ backend ตามโครงสร้างใหม่
+      dockerfile: Dockerfile
+    container_name: spring-boot-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mysql
+    env_file:
+      - backend/src/main/resources/.env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://my-mysql:3306/transport_application?serverTimezone=Asia/Bangkok
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+
+  frontend:
+    build:
+      context: ./frontend # frontend อยู่ในโฟลเดอร์แยกแล้ว
+      dockerfile: Dockerfile
+    container_name: vue-frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - backend
